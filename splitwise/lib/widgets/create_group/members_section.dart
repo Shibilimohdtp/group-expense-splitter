@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:splitwise/models/invited_member.dart';
+import 'package:splitwise/widgets/create_group/add_member_dialog.dart';
 
 class MembersSection extends StatelessWidget {
-  final TextEditingController memberEmailController;
-  final List<String> members;
-  final FocusNode emailFocusNode;
-  final VoidCallback onAddMember;
-  final Function(String) onRemoveMember;
-  final Function(String) onSubmitted;
+  final List<InvitedMember> members;
+  final Function(InvitedMember) onAddMember;
+  final Function(InvitedMember) onRemoveMember;
 
   const MembersSection({
     super.key,
-    required this.memberEmailController,
     required this.members,
-    required this.emailFocusNode,
     required this.onAddMember,
     required this.onRemoveMember,
-    required this.onSubmitted,
   });
 
   @override
@@ -55,7 +51,7 @@ class MembersSection extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildEmailInputField(context),
+                _buildAddMemberButton(context),
                 const SizedBox(height: 16),
                 _buildMembersList(context),
               ],
@@ -151,60 +147,50 @@ class MembersSection extends StatelessWidget {
     );
   }
 
-  Widget _buildEmailInputField(BuildContext context) {
+  Widget _buildAddMemberButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: memberEmailController,
-            focusNode: emailFocusNode,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: colorScheme.surfaceContainer,
-              labelText: 'Member Email',
-              hintText: 'Enter email and press add',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.1),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.secondary, width: 1.5),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            ),
-            onFieldSubmitted: onSubmitted,
+    final textTheme = Theme.of(context).textTheme;
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showAddMemberDialog(context),
+        icon: Icon(
+          Icons.person_add_rounded,
+          color: colorScheme.secondary,
+          size: 20,
+        ),
+        label: Text(
+          'Add Member',
+          style: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colorScheme.secondary,
           ),
         ),
-        const SizedBox(width: 12),
-        SizedBox(
-          height: 56,
-          width: 56,
-          child: FilledButton(
-            onPressed: onAddMember,
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.secondary,
-              foregroundColor: colorScheme.onSecondary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: EdgeInsets.zero,
-            ),
-            child: const Icon(Icons.add_rounded, size: 24),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          side: BorderSide(
+            color: colorScheme.secondary.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+          backgroundColor: colorScheme.secondary.withValues(alpha: 0.05),
         ),
-      ],
+      ),
     );
+  }
+
+  Future<void> _showAddMemberDialog(BuildContext context) async {
+    final member = await showDialog<InvitedMember>(
+      context: context,
+      builder: (context) => const AddMemberDialog(),
+    );
+    
+    if (member != null) {
+      onAddMember(member);
+    }
   }
 
   Widget _buildMembersList(BuildContext context) {
@@ -235,7 +221,7 @@ class MembersSection extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Add members by entering their email above.',
+                'Tap "Add Member" to invite people to your group.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -248,7 +234,7 @@ class MembersSection extends StatelessWidget {
     }
 
     return Column(
-      children: members.map((email) {
+      children: members.map((member) {
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
@@ -267,7 +253,7 @@ class MembersSection extends StatelessWidget {
                   .secondary
                   .withValues(alpha: 0.1),
               child: Text(
-                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.secondary,
@@ -275,9 +261,15 @@ class MembersSection extends StatelessWidget {
               ),
             ),
             title: Text(
-              email,
+              member.name,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            subtitle: Text(
+              member.email,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             trailing: IconButton(
@@ -286,7 +278,7 @@ class MembersSection extends StatelessWidget {
                 color: Theme.of(context).colorScheme.error,
                 size: 20,
               ),
-              onPressed: () => onRemoveMember(email),
+              onPressed: () => onRemoveMember(member),
             ),
             contentPadding: const EdgeInsets.only(left: 16, right: 8),
           ),

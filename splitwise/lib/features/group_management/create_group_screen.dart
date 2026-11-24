@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:splitwise/models/group.dart';
+import 'package:splitwise/models/invited_member.dart';
 import 'package:splitwise/services/auth_service.dart';
 import 'package:splitwise/services/group_service.dart';
 
@@ -23,10 +24,8 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
-  final _memberEmailController = TextEditingController();
   bool _isLoading = false;
-  final List<String> _members = [];
-  final FocusNode _emailFocusNode = FocusNode();
+  final List<InvitedMember> _members = [];
   bool get _isEditMode => widget.group != null;
 
   @override
@@ -36,7 +35,12 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
     _descriptionController =
         TextEditingController(text: widget.group?.description);
     if (_isEditMode) {
-      _members.addAll(widget.group!.invitedEmails);
+      // Convert existing invited emails to InvitedMember objects
+      for (String email in widget.group!.invitedEmails) {
+        _members.add(InvitedMember(name: email.split('@')[0], email: email));
+      }
+      // Also add any existing InvitedMember objects
+      _members.addAll(widget.group!.invitedMembers);
     }
   }
 
@@ -44,8 +48,6 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _memberEmailController.dispose();
-    _emailFocusNode.dispose();
     super.dispose();
   }
 
@@ -58,7 +60,7 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
           final updatedGroup = widget.group!.copyWith(
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
-            invitedEmails: _members,
+            invitedMembers: _members,
           );
           await groupService.updateGroup(updatedGroup);
           if (mounted) {
@@ -88,19 +90,19 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
             if (_members.isNotEmpty) {
               try {
                 // Add members one by one and catch individual errors
-                for (String memberEmail in _members) {
+                for (InvitedMember member in _members) {
                   try {
-                    await groupService.inviteMember(group.id, memberEmail);
+                    await groupService.inviteMember(group.id, member.email);
                   } catch (memberError) {
                     // Log the error but continue with other members
                     if (kDebugMode) {
-                      print('Error adding member $memberEmail: $memberError');
+                      print('Error adding member ${member.email}: $memberError');
                     }
                     // Optionally show a warning for this specific member
                     if (mounted) {
                       StatusSnackbar.showError(
                         context,
-                        message: 'Could not add $memberEmail',
+                        message: 'Could not add ${member.name}',
                         details: memberError.toString(),
                       );
                     }
@@ -150,29 +152,9 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
     }
   }
 
-  bool _isValidEmail(String email) {
-    // Simple email validation regex
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email);
-  }
-
-  void _addMember() {
-    final email = _memberEmailController.text.trim();
-
-    // Validate email format
-    if (email.isEmpty) {
-      StatusSnackbar.showError(context,
-          message: 'Please enter an email address');
-      return;
-    }
-
-    if (!_isValidEmail(email)) {
-      StatusSnackbar.showError(context,
-          message: 'Please enter a valid email address');
-      return;
-    }
-
-    if (_members.contains(email)) {
+  void _addMember(InvitedMember member) {
+    // Check if member with same email already exists
+    if (_members.any((m) => m.email == member.email)) {
       StatusSnackbar.showError(context,
           message: 'This email is already added to the group');
       return;
@@ -180,22 +162,19 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
 
     // Add the member
     setState(() {
-      _members.add(email);
-      _memberEmailController.clear();
+      _members.add(member);
     });
 
     // Show a small confirmation
     StatusSnackbar.showInfo(
       context,
-      message: '$email added to group',
+      message: '${member.name} added to group',
     );
-
-    _emailFocusNode.requestFocus();
   }
 
-  void _removeMember(String email) {
+  void _removeMember(InvitedMember member) {
     setState(() {
-      _members.remove(email);
+      _members.remove(member);
     });
   }
 
@@ -249,12 +228,9 @@ class CreateGroupScreenState extends State<CreateGroupScreen> {
             _buildAnimatedSection(
               index: 1,
               child: MembersSection(
-                memberEmailController: _memberEmailController,
                 members: _members,
-                emailFocusNode: _emailFocusNode,
                 onAddMember: _addMember,
                 onRemoveMember: _removeMember,
-                onSubmitted: (_) => _addMember(),
               ),
             ),
           ],

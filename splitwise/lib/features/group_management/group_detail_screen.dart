@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:splitwise/models/group.dart';
 import 'package:splitwise/models/user.dart';
+import 'package:splitwise/models/invited_member.dart';
 import 'package:splitwise/services/auth_service.dart';
 import 'package:splitwise/services/expense_service.dart';
 import 'package:splitwise/services/group_service.dart';
@@ -58,9 +59,31 @@ class GroupDetailScreenState extends State<GroupDetailScreen>
       final memberUsers =
           await _userService.getGroupMembers(widget.group.memberIds);
 
-      final invitedUsers = widget.group.invitedEmails.map((email) {
-        return User(uid: '', name: 'Invited', username: email, email: email);
-      }).toList();
+      // Create User objects from InvitedMember objects
+      final invitedUsers = <User>[];
+      
+      // Add users from new invitedMembers format
+      for (InvitedMember invitedMember in widget.group.invitedMembers) {
+        invitedUsers.add(User(
+          uid: '', 
+          name: invitedMember.name, 
+          username: invitedMember.email, 
+          email: invitedMember.email
+        ));
+      }
+      
+      // Add users from legacy invitedEmails format (for backward compatibility)
+      for (String email in widget.group.invitedEmails) {
+        // Only add if not already added from invitedMembers
+        if (!invitedUsers.any((user) => user.email == email)) {
+          invitedUsers.add(User(
+            uid: '', 
+            name: email.split('@')[0], // Use email prefix as name
+            username: email, 
+            email: email
+          ));
+        }
+      }
 
       if (mounted) {
         setState(() {
