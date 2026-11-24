@@ -1,93 +1,57 @@
-# SplitWise App
+# Group Expense Splitter
 
-A modern, feature-rich expense splitting application built with Flutter and Firebase. This app helps users manage shared expenses within groups, track balances, and settle debts efficiently.
+A Flutter + Firebase app for splitting shared bills among friends, flatmates and travel groups. Create a group, add expenses, and see who owes whom.
+
+> Personal project, built 2024–2025. The working title inside the code is "SplitWise". It is not affiliated with Splitwise Inc.
 
 ## Features
+- **Accounts:** email/password sign-up and login, Google Sign-In, password reset (Firebase Authentication)
+- **Groups:** create groups, invite members, and share a join link or QR code
+- **Expenses:** choose who paid, and split four ways: equally, by exact amounts, by percentage or by shares
+- **Receipts:** attach a photo to an expense (Firebase Storage)
+- **Balances:** per-group balances, suggested settlements and spending charts
+- **Expense list:** filter by date range and other criteria
+- **Export:** generate a PDF summary and share it
+- **Notifications:** push (Firebase Cloud Messaging) and local notifications
+- **Settings:** currency symbol, light/dark theme
+- **Local storage:** SQLite (sqflite) cache for groups and expenses
 
-- **User Authentication**: Secure sign-up and login functionality using Firebase Authentication.
-- **Group Management**: Create, join, and manage expense groups with friends.
-- **Expense Tracking**: Add, edit, and delete expenses within groups.
-- **Smart Expense Splitting**: Automatically calculate and split expenses among group members.
-- **Balance Calculation**: Real-time balance calculations for each user within groups.
-- **Offline Support**: Local database storage for offline expense entry and syncing.
-- **Currency Conversion**: Support for multiple currencies with automatic conversion.
-- **Notifications**: Real-time notifications for new expenses and group invitations.
-- **Receipt Management**: Upload and store receipt images for expenses.
-- **User Profiles**: Customizable user profiles with profile picture support.
-- **Dark Mode**: Toggle between light and dark themes for comfortable usage.
+## Tech stack
+| Area | Tools |
+|------|-------|
+| Framework | Flutter, Dart |
+| State management | Provider |
+| Navigation | go_router |
+| Backend | Firebase Auth, Cloud Firestore, Firebase Storage, Firebase Cloud Messaging |
+| Local data | sqflite, shared_preferences |
+| UI | fl_chart, flutter_staggered_animations, cached_network_image |
+| Other | pdf, share_plus, qr_flutter, image_picker |
 
-## Technology Stack
+## Project structure
+```
+splitwise/lib/
+├── constants/   # colours and theme
+├── features/    # screens: authentication, groups, expenses, home, profile, settings, notifications
+├── models/      # user, group, expense, invited member, notification
+├── services/    # auth, expenses, groups, users, notifications, export, settings, SQLite helper
+├── utils/       # currency helpers
+└── widgets/     # reusable components grouped by screen
+```
 
-- **Frontend**: Flutter
-- **Backend**: Firebase (Firestore, Authentication, Cloud Storage)
-- **State Management**: Provider
-- **Local Database**: SQLite (via sqflite package)
-- **Notifications**: Firebase Cloud Messaging (FCM)
-- **Image Handling**: Firebase Storage
-
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK (latest stable version)
-- Dart SDK
-- Firebase account and project set up
-- Android Studio / VS Code with Flutter extensions
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/your-username/SplitWise.git
-   ```
-
-2. Navigate to the project directory:
-   ```
-   cd splitwise-app
-   ```
-
-3. Install dependencies:
-   ```
+## Running it locally
+1. Install the Flutter SDK (stable channel).
+2. Create your own Firebase project and enable Authentication (email and Google), Firestore and Storage.
+3. From `splitwise/`, run `flutterfire configure` to generate `firebase_options.dart` and `google-services.json` for your project.
+4. Run:
+   ```bash
+   cd splitwise
    flutter pub get
-   ```
-
-4. Set up Firebase:
-   - Create a new Firebase project
-   - Add your Android and iOS apps to the Firebase project
-   - Download and place the `google-services.json` (for Android) and `GoogleService-Info.plist` (for iOS) in the respective directories
-
-5. Run the app:
-   ```
    flutter run
    ```
 
-## Project Structure
+## Status
+- Fully built personal project; not published on app stores.
+- Next steps: automated tests, a screenshot gallery, and removing generated build files from the repository.
 
-- `lib/`
-  - `models/`: Data models (User, Expense, Group, etc.)
-  - `services/`: Firebase and local service implementations
-  - `screens/`: UI screens
-  - `widgets/`: Reusable UI components
-  - `utils/`: Utility functions and constants
-
-## Key Services
-
-- `AuthService`: Handles user authentication and profile management
-- `ExpenseService`: Manages expense-related operations
-- `GroupService`: Handles group creation and management
-- `NotificationService`: Manages push notifications
-- `UserService`: User-related operations and profile management
-- `SettingsService`: Manages app settings like currency and theme
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Firebase for providing a robust backend solution
-- Flutter team for an excellent cross-platform framework
+## Author
+**Shibili Muhammed T P**: [LinkedIn](https://www.linkedin.com/in/shibilimohdtp) · [Forma Studio](https://formastdio.com)
